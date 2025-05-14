@@ -13,6 +13,204 @@
       background-color: #f8f9fa;
       color: #333;
     }
+
+    // ───── Render ─────
+    function updateDisplay() {
+      document.getElementById('genCounter').textContent = generation;
+      
+      if (chart) {
+        chart.data.datasets[0].data = currentDist;
+        chart.update();
+      }
+      
+      // Update selection status
+      updateSelection();
+    }
+
+    function getSelectionTypeText() {
+      switch(currentSelectionMode) {
+        case 'stabilizing': return 'Stabilizing (Medium sizes favored)';
+        case 'directional': return 'Directional (Large sizes favored)';
+        case 'disruptive': return 'Disruptive (Small & Large sizes favored)';
+        default: return 'None (Random drift only)';
+      }
+    }
+
+    // ───── Selection Mode Presets ─────
+    function selectMode(mode) {
+      // Reset selection
+      selectedCats = [];
+      
+      // Reset button styles
+      document.querySelectorAll('#smallBtn, #mediumBtn, #largeBtn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      currentSelectionMode = mode;
+      
+      // Apply appropriate selection
+      switch(mode) {
+        case 'stabilizing':
+          toggleCat('medium');
+          break;
+        case 'directional':
+          toggleCat('large');
+          break;
+        case 'disruptive':
+          toggleCat('small');
+          toggleCat('large');
+          break;
+        case 'noselection':
+          // No selection
+          break;
+      }
+      
+      updateDisplay();
+    }
+
+    // ───── Breed button logic ─────
+    function onBreed() {
+      if (selectedCats.length === 0) {
+        // No selection → jitter around baseline
+        if (baselineNeedsSet) {
+          baselineDist = [...currentDist];
+          baselineNeedsSet = false;
+        }
+        currentDist = baselineDist.map(v => addNoise(v, NOISE_SCALE));
+      } else {
+        // Selection → drift from CURRENT toward target
+        const target = computeTarget();
+        currentDist = currentDist.map((v, i) => {
+          let vNew = v * (1 - ALPHA) + target[i] * ALPHA;
+          return addNoise(vNew, NOISE_SCALE);
+        });
+      }
+      normalize(currentDist);
+      generation++;
+      
+      // Regenerate isopods based on new distribution
+      generateIsopods();
+      
+      updateDisplay();
+    }
+
+    // ───── Auto-Breeding ─────
+    function toggleAutoBreed() {
+      if (autoBreedInterval) {
+        clearInterval(autoBreedInterval);
+        autoBreedInterval = null;
+        document.getElementById('autoBreedBtn').textContent = 'Auto-Breed';
+      } else {
+        const speed = parseInt(document.getElementById('breedSpeed').value);
+        autoBreedInterval = setInterval(onBreed, speed);
+        document.getElementById('autoBreedBtn').textContent = 'Stop Breeding';
+      }
+    }
+
+    // ───── Reset Simulation ─────
+    function resetSimulation() {
+      // Stop auto-breeding if active
+      if (autoBreedInterval) {
+        clearInterval(autoBreedInterval);
+        autoBreedInterval = null;
+        document.getElementById('autoBreedBtn').textContent = 'Auto-Breed';
+      }
+      
+      // Reset distribution to initial state
+      initDist();
+      generation = 0;
+      
+      // Clear selection
+      selectedCats = [];
+      document.querySelectorAll('#smallBtn, #mediumBtn, #largeBtn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Reset selection mode
+      selectMode('noselection');
+      
+      // Set canvas dimensions
+      const canvas = document.getElementById('isopodCanvas');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      
+      // Regenerate isopods
+      generateIsopods();
+      
+      // Update display
+      updateDisplay();
+    }
+
+    // ───── Trait toggle logic ─────
+    function toggleCat(cat) {
+      const idx = selectedCats.indexOf(cat);
+      const btn = document.getElementById(cat + 'Btn');
+      
+      if (idx === -1) {
+        selectedCats.push(cat);
+        btn.classList.add('active');
+      } else {
+        selectedCats.splice(idx, 1);
+        btn.classList.remove('active');
+        baselineNeedsSet = true;
+      }
+      
+      updateDisplay();
+    }
+
+    // ───── Handle Canvas Mouse Events ─────
+    function handleCanvasMouseMove(e) {
+      const canvas = document.getElementById('isopodCanvas');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      let hoveredIsopod = null;
+      
+      // Check if mouse is over any isopod
+      for (let i = isopods.length - 1; i >= 0; i--) {
+        if (isopods[i].isPointInside(x, y)) {
+          hoveredIsopod = isopods[i];
+          break;
+        }
+      }
+      
+      if (hoveredIsopod) {
+        // Show tooltip
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX + 10) + 'px';
+        tooltip.style.top = (e.clientY + 10) + 'px';
+        tooltip.innerHTML = `Body Size: ${sizeToMillimeters(hoveredIsopod.size).toFixed(1)} mm<br>Status: ${hoveredIsopod.selected ? 'Selected' : 'Not Selected'}`;
+        
+        canvas.style.cursor = 'pointer';
+      } else {
+        // Hide tooltip
+        tooltip.style.display = 'none';
+        canvas.style.cursor = 'default';
+      }
+    }
+
+    function handleCanvasMouseLeave() {
+      tooltip.style.display = 'none';
+      document.getElementById('isopodCanvas').style.cursor = 'default';
+    }
+    
+    // ───── Handle Canvas Click to Toggle Isopod State ─────
+    function handleCanvasClick(e) {
+      const canvas = document.getElementById('isopodCanvas');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Check if click is on any isopod
+      for (let i = isopods.length - 1; i >= 0; i--) {
+        if (isopods[i].isPointInside(x, y)) {
+          // Toggle rolled up state
+          isopods[i].rolledUp = !isopods[i].rolledUp;
+          break; // Only toggle the topmost isopod
+        }
+      }
+    }
     
     h1 {
       color: #2c3e50;
@@ -362,7 +560,7 @@
       <h2>Exploring Selection Patterns with Isopod Body Size</h2>
       
       <div class="instruction-box">
-        <p>Select which isopod sizes have the highest survival rate in this environment, then observe how the population changes over generations! You can select multiple sizes or change your selection at any time.</p>
+        <p>Select which isopod sizes have the highest survival rate in this environment, then observe how the population changes over generations! You can select multiple sizes or change your selection at any time. Click on any isopod to toggle between rolled up and extended states.</p>
       </div>
       
       <div class="info-box">
@@ -925,7 +1123,7 @@
       });
       
       // Reset selection mode
-      selectMode('noselection');
+      currentSelectionMode = 'noselection';
       
       // Set canvas dimensions
       const canvas = document.getElementById('isopodCanvas');
@@ -992,14 +1190,55 @@
       tooltip.style.display = 'none';
       document.getElementById('isopodCanvas').style.cursor = 'default';
     }
+    
+    // ───── Handle Canvas Click to Toggle Isopod State ─────
+    function handleCanvasClick(e) {
+      const canvas = document.getElementById('isopodCanvas');
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Check if click is on any isopod
+      for (let i = isopods.length - 1; i >= 0; i--) {
+        if (isopods[i].isPointInside(x, y)) {
+          // Toggle rolled up state
+          isopods[i].rolledUp = !isopods[i].rolledUp;
+          break; // Only toggle the topmost isopod
+        }
+      }
+    }
+
+    // Function to initialize simulation
+    function initSimulation() {
+      // Initialize tooltip
+      tooltip = document.getElementById('tooltip');
+      
+      // Initialize simulation
+      initDist();
+      setupChart();
+      
+      // Set initial canvas dimensions
+      const canvas = document.getElementById('isopodCanvas');
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      
+      // Generate isopods
+      generateIsopods();
+      
+      // Update display
+      updateDisplay();
+      
+      // Start animation loop
+      drawIsopods();
+    }
 
     // ───── Initialize & Start ─────
     document.addEventListener('DOMContentLoaded', function() {
       // Add Google Font
-    const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap';
-    fontLink.rel = 'stylesheet';
-    document.head.appendChild(fontLink);
+      const fontLink = document.createElement('link');
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap';
+      fontLink.rel = 'stylesheet';
+      document.head.appendChild(fontLink);
       
       // Wire up UI
       document.getElementById('breedBtn').addEventListener('click', onBreed);
@@ -1014,17 +1253,21 @@
       const canvas = document.getElementById('isopodCanvas');
       canvas.addEventListener('mousemove', handleCanvasMouseMove);
       canvas.addEventListener('mouseleave', handleCanvasMouseLeave);
+      canvas.addEventListener('click', handleCanvasClick);
       
-      // Initialize simulation
-      initDist();
-      setupChart();
-      generateIsopods();
-      updateDisplay();
-      drawIsopods();
-      selectMode('noselection');
+      // Initialize the simulation
+      initSimulation();
     });
-	
-	window.onload = resetSimulation;
+    
+    // Additional safety for ensuring everything is loaded
+    window.onload = function() {
+      // If isopods array is empty, reinitialize the simulation
+      if (isopods.length === 0) {
+        console.log("Reinitializing simulation to ensure isopods are generated");
+        resetSimulation();
+      }
+    };
   </script>
 </body>
 </html>
+  
