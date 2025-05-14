@@ -13,8 +13,201 @@
       background-color: #f8f9fa;
       color: #333;
     }
+/* Achievements Panel */
+    .achievements-panel {
+      position: fixed;
+      top: 20%;
+      right: 0;
+      display: flex;
+      z-index: 900;
+    }
+    
+    .achievements-toggle {
+      background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+      color: #FFC107;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px 0 0 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .achievements-toggle:hover {
+      width: 45px;
+      color: #FFD54F;
+    }
+    
+    .toggle-icon {
+      font-size: 22px;
+    }
+    
+    .achievements-container {
+      background: rgba(42, 42, 42, 0.95);
+      color: white;
+      border-radius: 8px 0 0 8px;
+      width: 0;
+      overflow: hidden;
+      transition: width 0.3s ease;
+      box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .achievements-panel.open .achievements-container {
+      width: 300px;
+      padding: 15px;
+    }
+    
+    .achievements-panel h3 {
+      margin-top: 0;
+      color: #FFC107;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 8px;
+    }
+    
+    .achievements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .achievement-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.2s ease;
+    }
+    
+    .achievement-item:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    
+    .achievement-item .achievement-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+    
+    .achievement-item.unlocked .achievement-icon {
+      background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%);
+      box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4);
+    }
+    
+    .achievement-item.locked {
+      filter: grayscale(0.8);
+      opacity: 0.7;
+    }
+    
+    .achievement-item.locked:hover {
+      filter: grayscale(0.5);
+      opacity: 0.9;
+    }
+    
+    .achievement-details {
+      flex: 1;
+    }
+    
+    .achievement-name {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    
+    .achievement-description {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+/* Achievement toast */
+    #achievement-toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(42, 42, 42, 0.95);
+      color: white;
+      padding: 0;
+      border-radius: 12px;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+      transform: translateY(30px);
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                  opacity 0.3s ease;
+      overflow: hidden;
+      max-width: 350px;
+    }
 
-    // ───── Render ─────
+    #achievement-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    #achievement-toast .achievement-content {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+    }
+    
+    #achievement-toast .achievement-icon {
+      background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      margin-right: 16px;
+      box-shadow: 0 2px 8px rgba(255, 193, 7, 0.5);
+      flex-shrink: 0;
+    }
+    
+    #achievement-toast .achievement-text-container {
+      flex: 1;
+    }
+    
+    #achievement-toast .achievement-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      color: #FFC107;
+      margin-bottom: 5px;
+      letter-spacing: 0.5px;
+    }
+    
+    #achievement-toast .achievement-message {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: white;
+    }
+    
+    /* Animation pulse effect for the icon */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    #achievement-toast.show .achievement-icon {
+      animation: pulse 1s infinite;
+    }    // ───── Render ─────
     function updateDisplay() {
       document.getElementById('genCounter').textContent = generation;
       
@@ -603,8 +796,29 @@
       </div>
     </div>
   </div>
+<!-- Achievement Panel -->
+<div class="achievements-panel">
+  <div class="achievements-toggle">
+    <span class="toggle-icon">🏆</span>
+  </div>
+  <div class="achievements-container">
+    <h3>Achievements</h3>
+    <div class="achievements-list">
+      <div class="achievement-item locked" id="rolling-achievement" title="Roll up all isopods at once">
+        <div class="achievement-icon">🔒</div>
+        <div class="achievement-details">
+          <div class="achievement-name">They See Me Rolling</div>
+          <div class="achievement-description">Get all isopods to roll up simultaneously</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- Achievement Toast -->
+  <div id="achievement-toast">
+  </div>
+
   
-  <div id="tooltip" class="tooltip"></div>
 
   <script>
     // ───── Parameters ─────
@@ -639,13 +853,85 @@
     let autoBreedInterval = null;
     let currentSelectionMode = 'noselection';
     let tooltip = null;
+    let achievementGiven = false;
 
     const catParams = {
       small:  { mean: TRAIT_MIN + (TRAIT_MAX - TRAIT_MIN) / 4,     sd: GAUSS_SD },
       medium: { mean: GAUSS_MEAN,                                  sd: MEDIAN_SD },
       large:  { mean: TRAIT_MIN + 3 * (TRAIT_MAX - TRAIT_MIN) / 4, sd: GAUSS_SD }
     };
+// ───── Achievement Panel Functions ─────
+    function toggleAchievementPanel() {
+      const panel = document.querySelector('.achievements-panel');
+      panel.classList.toggle('open');
+    }
+    
+    function updateAchievement(id, unlocked) {
+      const achievement = document.getElementById(id);
+      if (!achievement) return;
+      
+      if (unlocked) {
+        achievement.classList.remove('locked');
+        achievement.classList.add('unlocked');
+        // Replace the lock icon with a trophy
+        const icon = achievement.querySelector('.achievement-icon');
+        icon.textContent = '🏆';
+      }
+    }
 
+    // ───── Achievement Helpers ─────
+    function showAchievement(msg) {
+      if (achievementGiven) return;
+      achievementGiven = true;
+      
+      const toast = document.getElementById('achievement-toast');
+      toast.innerHTML = `
+        <div class="achievement-content">
+          <div class="achievement-icon">🏆</div>
+          <div class="achievement-text-container">
+            <div class="achievement-title">Achievement Unlocked!</div>
+            <div class="achievement-message">${msg.replace('🏆 Achievement Unlocked: ', '')}</div>
+          </div>
+        </div>
+      `;
+      
+      // Play achievement sound
+      const sound = new Audio('achievement-sound.mp3');
+      sound.volume = 0.7;
+      sound.play().catch(e => console.log('Could not play achievement sound:', e));
+      
+      // Show with animation
+      toast.style.display = 'block';
+      setTimeout(() => toast.classList.add('show'), 10);
+      
+      // Hide toast after duration
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.style.display = 'none', 300);
+      }, 4000);
+      
+      // Update achievement panel
+      updateAchievement('rolling-achievement', true);
+    }
+
+    function checkAllRolledUp() {
+      if (isopods.length && isopods.every(iso => iso.rolledUp)) {
+        showAchievement('They see me rolling!');
+      }
+    }
+    
+    // ───── Canvas Click Handler (with achievement) ─────
+    function handleCanvasClick(e) {
+      const rect = e.target.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      for (let i = isopods.length - 1; i >= 0; i--) {
+        if (isopods[i].isPointInside(x, y)) {
+          isopods[i].rolledUp = !isopods[i].rolledUp;
+          checkAllRolledUp();
+          break;
+        }
+      }
+    }
     // ───── Helpers ─────
     function normalize(arr) {
       const sum = arr.reduce((s, x) => s + x, 0);
@@ -1191,22 +1477,6 @@
       document.getElementById('isopodCanvas').style.cursor = 'default';
     }
     
-    // ───── Handle Canvas Click to Toggle Isopod State ─────
-    function handleCanvasClick(e) {
-      const canvas = document.getElementById('isopodCanvas');
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      // Check if click is on any isopod
-      for (let i = isopods.length - 1; i >= 0; i--) {
-        if (isopods[i].isPointInside(x, y)) {
-          // Toggle rolled up state
-          isopods[i].rolledUp = !isopods[i].rolledUp;
-          break; // Only toggle the topmost isopod
-        }
-      }
-    }
 
     // Function to initialize simulation
     function initSimulation() {
@@ -1244,7 +1514,7 @@
       document.getElementById('breedBtn').addEventListener('click', onBreed);
       document.getElementById('resetBtn').addEventListener('click', resetSimulation);
       document.getElementById('autoBreedBtn').addEventListener('click', toggleAutoBreed);
-      
+      document.querySelector('.achievements-toggle').addEventListener('click', toggleAchievementPanel);
       ['small','medium','large'].forEach(cat => {
         document.getElementById(cat + 'Btn')
           .addEventListener('click', () => toggleCat(cat));
@@ -1266,7 +1536,11 @@
         console.log("Reinitializing simulation to ensure isopods are generated");
         resetSimulation();
       }
+	
+      new Audio('achievement-sound.mp3').load();	
     };
+
+	
   </script>
 </body>
 </html>
